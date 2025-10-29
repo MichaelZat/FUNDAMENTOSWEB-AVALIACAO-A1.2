@@ -120,45 +120,103 @@
                 </div>
             </section>
         </main>
-    </div>
-
-    <footer class="text-center" style="display: flex; justify-content: center; align-items: center; gap: 0.4%;">
-        <div>MICHAEL ZAT — FUNDAMENTOS AO DESENVOLVIMENTO WEB - 2025/2
-        <img src="imagens/trabalhar.gif" alt="Seu GIF" class="footer-gif" style="width: 2%;">
-        </div>
-        
-    </footer>
 
 
-    <script>
-        const apiKey = "d65102712161ea9dc6760d46b6049aac715080358ae9880e5a5d45cd6fbcc83d";
-        const tabelaBody = document.querySelector('#tabelaHistorico tbody');
-        const cardsMoedas = document.getElementById('cardsMoedas');
-        const moedasUnicas = new Map();
-        async function consultarMoeda(sigla) {
-            const url = `https://economia.awesomeapi.com.br/json/last/${sigla}-BRL?token=${apiKey}`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            const chave = Object.keys(data)[0];
-            return data[chave];
-        }
-        function adicionarLinhaHistorico(d) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        <section class="card mb-4">
+            <div class="card-body">
+                <h5>Consulta e exclusão de log</h5>
+                <form id="formMoedas" class="row g-3 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label for="moedaex" class="form-label">Moeda a excluir</label>
+                        <select id="moedaex" class="form-select" required>
+                            <option value="">Selecione</option>
+                            <option value="USD">USD - Dólar americano</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - Libra esterlina</option>
+                            <option value="JPY">JPY - Iene</option>
+                            <option value="AUD">AUD - Dólar australiano</option>
+                            <option value="CAD">CAD - Dólar canadense</option>
+                            <option value="CHF">CHF - Franco suíço</option>
+                            <option value="CNY">CNY - Yuan chinês</option>
+                            <option value="BTC">BTC - Bitcoin</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <button type="button" class="btn btn-danger" onclick="limparlog()">Excluir seleção</button>
+                    </div>
+
+                    <div class="col-12 col-md-2 d-grid">
+                        <button type="button" class="btn btn-primary" onclick="consultarlog()">Consultar</button>
+                    </div>
+
+                </form>
+            </div>
+        </section>
+
+        <h2 class="h5">Histórico de log</h2>
+
+        <ul id="resultados">
+            <li>Resultados</li>
+        </ul </div>
+
+        <footer class="text-center" style="display: flex; justify-content: center; align-items: center; gap: 0.4%;">
+            <div>MICHAEL ZAT — FUNDAMENTOS AO DESENVOLVIMENTO WEB - 2025/2
+                <img src="imagens/trabalhar.gif" alt="Seu GIF" class="footer-gif" style="width: 2%;">
+            </div>
+
+        </footer>
+
+
+        <script>
+            const apiKey = "d65102712161ea9dc6760d46b6049aac715080358ae9880e5a5d45cd6fbcc83d";
+            const tabelaBody = document.querySelector('#tabelaHistorico tbody');;
+            const cardsMoedas = document.getElementById('cardsMoedas');
+            const moedasUnicas = new Map();
+            async function consultarMoeda(sigla) {
+                const url = `https://economia.awesomeapi.com.br/json/last/${sigla}-BRL?token=${apiKey}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                const chave = Object.keys(data)[0];
+                return data[chave];
+            }
+            function adicionarLinhaHistorico(d) {
+                const tr = document.createElement('tr');
+                const urllog = `https://www.piway.com.br/unoesc/api/inserir/log/406860/awesomeapi/post/${d.code}`;
+                const resp = fetch(urllog);
+                console.log(urllog);
+                tr.innerHTML = `
                 <td>${d.code}</td>
                 <td>${d.name}</td>
                 <td class="mono">${d.bid}</td>
                 <td class="mono">${d.ask}</td>
                 <td>${d.pctChange}</td>
                 <td>${new Date(d.timestamp * 1000).toLocaleString()}</td>`;
-            tabelaBody.prepend(tr);
-        }
-        function atualizarCards() {
-            cardsMoedas.innerHTML = '';
-            for (const [sigla, d] of moedasUnicas.entries()) {
-                const card = document.createElement('div');
-                card.className = 'card card-moeda shadow-sm';
-                card.innerHTML = `
+                tabelaBody.prepend(tr);
+            }
+
+
+            async function consultarlog() {
+                let urllog = `https://www.piway.com.br/unoesc/api/logs/406860`;
+                let resposta = await fetch(urllog);
+                let dados = await resposta.json();
+                console.log(dados);
+            
+                
+                console.log(dados);
+
+                let nomes = document.getElementById('resultados');
+                nomes.innerHTML = '';
+                for (let item of dados) {
+                    nomes.innerHTML += `<li>${item.resultado}</li>`;
+                }
+            }
+
+            function atualizarCards() {
+                cardsMoedas.innerHTML = '';
+                for (const [sigla, d] of moedasUnicas.entries()) {
+                    const card = document.createElement('div');
+                    card.className = 'card card-moeda shadow-sm';
+                    card.innerHTML = `
                     <div class="card-body p-3">
                         <h6 class="card-title">${d.code}</h6>
                         <p class="mb-1"><strong>Compra:</strong> ${d.bid}</p>
@@ -166,53 +224,60 @@
                         <p class="mb-1"><strong>Variação:</strong> ${d.pctChange}%</p>
                         <small class="text-muted">${d.name}</small>
                     </div>`;
-                cardsMoedas.appendChild(card);
-            }
-        }
-        async function consultarMoedas() {
-            const m1 = document.getElementById('moeda1').value;
-            const m2 = document.getElementById('moeda2').value;
-            if (!m1) {
-                alert("Selecione a moeda principal.");
-                return;
-            }
-            moedasUnicas.clear();
-            cardsMoedas.innerHTML = '';
-            const moedasParaBuscar = [m1];
-            if (m2 && m2 !== m1) moedasParaBuscar.push(m2);
-            for (const sigla of moedasParaBuscar) {
-                const dados = await consultarMoeda(sigla);
-                adicionarLinhaHistorico(dados);
-                moedasUnicas.set(sigla, dados);
-            }
-            atualizarCards();
-        }
-        async function filtrarMoedas() {
-            const valor = parseFloat(document.getElementById('valorFiltro').value);
-            if (isNaN(valor)) {
-                alert('Digite um valor válido de variação.');
-                return;
-            }
-            moedasUnicas.clear();
-            cardsMoedas.innerHTML = '';
-            const todasMoedas = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "BTC"];
-            for (const sigla of todasMoedas) {
-                const d = await consultarMoeda(sigla);
-                const varNum = Math.abs(parseFloat(d.pctChange));
-                if (varNum >= valor) {
-                    adicionarLinhaHistorico(d);
-                    moedasUnicas.set(sigla, d);
+                    cardsMoedas.appendChild(card);
                 }
             }
-            atualizarCards();
-        }
-        function limparCards() {
-            cardsMoedas.innerHTML = '';
-            moedasUnicas.clear();
-        }
-    </script>
+            async function consultarMoedas() {
+                const m1 = document.getElementById('moeda1').value;
+                const m2 = document.getElementById('moeda2').value;
+                if (!m1) {
+                    alert("Selecione a moeda principal.");
+                    return;
+                }
+                moedasUnicas.clear();
+                cardsMoedas.innerHTML = '';
+                const moedasParaBuscar = [m1];
+                if (m2 && m2 !== m1) moedasParaBuscar.push(m2);
+                for (const sigla of moedasParaBuscar) {
+                    const dados = await consultarMoeda(sigla);
+                    adicionarLinhaHistorico(dados);
+                    moedasUnicas.set(sigla, dados);
+                }
+                atualizarCards();
+            }
+            async function filtrarMoedas() {
+                const valor = parseFloat(document.getElementById('valorFiltro').value);
+                if (isNaN(valor)) {
+                    alert('Digite um valor válido de variação.');
+                    return;
+                }
+                moedasUnicas.clear();
+                cardsMoedas.innerHTML = '';
+                const todasMoedas = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "BTC"];
+                for (const sigla of todasMoedas) {
+                    const d = await consultarMoeda(sigla);
+                    const varNum = Math.abs(parseFloat(d.pctChange));
+                    if (varNum >= valor) {
+                        adicionarLinhaHistorico(d);
+                        moedasUnicas.set(sigla, d);
+                    }
+                }
+                atualizarCards();
+            }
+            function limparCards() {
+                cardsMoedas.innerHTML = '';
+                moedasUnicas.clear();
+            }
+
+           async function limparlog() {
+            const moex = document.getElementById('moedaex').value;
+                let urllog = `https://www.piway.com.br/unoesc/api/excluir/log/${moex}/aluno/406860`;
+                let resposta = await fetch(urllog);
+                let dados = await resposta.json();
+                console.log(dados);
+            
+            }
+        </script>
 </body>
 
-
 </html>
-
